@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>일본어 학습 튜터</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface2: #21262d;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text2: #8b949e;
+  --blue: #1f6feb;
+  --purple: #7c3aed;
+  --green: #3fb950;
+  --amber: #e3b341;
+  --red: #f85149;
+  --teal: #39c5cf;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans KR', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── 헤더 ── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-title { font-size: 16px; font-weight: 700; }
+.header-sub { font-size: 12px; color: var(--text2); margin-left: auto; }
+
+/* ── 탭 ── */
+.tabs {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.tab {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+/* ── 컨텐츠 ── */
+.content { padding: 16px; max-width: 600px; margin: 0 auto; display: none; }
+.content.active { display: block; }
+
+/* ── 카드 공통 ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── 단어 깜빡이 ── */
+.flash-card {
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  border-radius: 20px;
+  padding: 32px 20px 24px;
+  text-align: center;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.flash-card::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  background: rgba(255,255,255,.05);
+  border-radius: 50%;
+}
+.flash-inner {
+  background: rgba(255,255,255,.12);
+  border-radius: 14px;
+  padding: 24px 16px;
+  margin-bottom: 14px;
+}
+.flash-word {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 2.8em;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+.flash-reading { font-size: 1.1em; color: rgba(255,255,255,.85); margin-top: 8px; }
+.flash-kor {
+  background: rgba(0,0,0,.28);
+  border-radius: 10px;
+  padding: 8px 20px;
+  font-size: 1.4em;
+  font-weight: 600;
+  color: #fff;
+  display: inline-block;
+  margin-top: 6px;
+}
+.flash-prog {
+  height: 4px;
+  background: rgba(255,255,255,.2);
+  border-radius: 2px;
+  margin-top: 16px;
+  overflow: hidden;
+}
+.flash-bar {
+  height: 100%;
+  background: rgba(255,255,255,.85);
+  border-radius: 2px;
+  width: 100%;
+  transition: width linear;
+}
+.flash-counter { color: rgba(255,255,255,.6); font-size: .8em; margin-top: 6px; }
+.ctrl-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.btn {
+  padding: 10px 8px;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.btn:active { transform: scale(.96); }
+.btn-primary { background: linear-gradient(135deg, var(--blue), var(--purple)); color: #fff; }
+.btn-secondary { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); }
+.speed-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text2);
+}
+.speed-row select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+.tts-status { font-size: 11px; }
+
+/* ── 학습 카드 ── */
+.category-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.cat-btn {
+  padding: 10px 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface2);
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all .15s;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.cat-btn.active {
+  background: rgba(31,111,235,.2);
+  border-color: var(--blue);
+  color: var(--blue);
+}
+.study-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px 20px;
+  text-align: center;
+  min-height: 180px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.study-foreign {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 2.4em;
+  font-weight: 700;
+  color: var(--text);
+}
+.study-reading { font-size: 1.1em; color: var(--blue); margin-top: 6px; }
+.study-answer {
+  background: rgba(63,185,80,.1);
+  border: 2px solid var(--green);
+  border-radius: 12px;
+  padding: 12px 20px;
+  margin-top: 14px;
+  font-size: 1.4em;
+  font-weight: 600;
+  color: var(--green);
+}
+.study-hint { font-size: 13px; color: var(--text2); margin-top: 8px; }
+.nav-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 6px; }
+.counter-text { text-align: center; font-size: 12px; color: var(--text2); margin: 8px 0; }
+
+/* ── 번역기 ── */
+.textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 14px;
+  padding: 12px;
+  resize: none;
+  font-family: 'Noto Sans KR', sans-serif;
+  margin-bottom: 10px;
+}
+.textarea:focus { outline: none; border-color: var(--blue); }
+.result-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--blue);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 12px;
+  display: none;
+}
+.result-main {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 2em;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 6px;
+}
+.result-reading { text-align: center; font-size: 1em; color: var(--blue); margin-bottom: 12px; }
+.result-alt { font-size: 12px; color: var(--text2); }
+
+/* ── 배지 ── */
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+.badge-green { background: rgba(63,185,80,.15); color: var(--green); }
+.badge-blue { background: rgba(31,111,235,.15); color: #58a6ff; }
+.badge-amber { background: rgba(227,179,65,.15); color: var(--amber); }
+
+/* ── 로딩 ── */
+.loading {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+.loading span {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--blue);
+  animation: bounce .8s infinite;
+}
+.loading span:nth-child(2) { animation-delay: .15s; }
+.loading span:nth-child(3) { animation-delay: .3s; }
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(.8); opacity: .5; }
+  40% { transform: scale(1.2); opacity: 1; }
+}
+
+/* ── API 키 ── */
+.api-notice {
+  background: rgba(227,179,65,.1);
+  border: 1px solid rgba(227,179,65,.3);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 12px;
+  color: var(--amber);
+  margin-bottom: 12px;
+  display: none;
+}
+.input-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.input-text {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 13px;
+}
+.input-text:focus { outline: none; border-color: var(--blue); }
+
+/* ── 애니메이션 ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn .3s ease; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span style="font-size:22px">✈️</span>
+  <div>
+    <div class="header-title">일본어 학습 튜터</div>
+  </div>
+  <div class="header-sub" id="apiStatus">API 미설정</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab(0)">⚡ 단어 깜빡이</div>
+  <div class="tab" onclick="switchTab(1)">📚 학습 카드</div>
+  <div class="tab" onclick="switchTab(2)">✏️ 번역기</div>
+  <div class="tab" onclick="switchTab(3)">⚙️ 설정</div>
+</div>
+
+<!-- ── 탭 0: 단어 깜빡이 ── -->
+<div class="content active" id="tab0">
+  <div class="flash-card">
+    <div class="flash-inner">
+      <div class="flash-word fade-in" id="fw">---</div>
+      <div class="flash-reading" id="fr"></div>
+    </div>
+    <div class="flash-kor" id="fk">---</div>
+    <div class="flash-prog"><div class="flash-bar" id="fp"></div></div>
+    <div class="flash-counter" id="fc">0 / 0</div>
+  </div>
+
+  <div class="ctrl-row">
+    <button class="btn btn-secondary" onclick="flashPrev()">◀ 이전</button>
+    <button class="btn btn-primary" id="playBtn" onclick="flashToggle()">⏸ 정지</button>
+    <button class="btn btn-secondary" onclick="flashNext()">다음 ▶</button>
+    <button class="btn btn-secondary" id="muteBtn" onclick="flashMute()">🔊 음성</button>
+  </div>
+  <div class="speed-row">
+    <span>간격</span>
+    <select id="speedSel" onchange="changeSpeed()">
+      <option value="1500">1.5초</option>
+      <option value="2000" selected>2초</option>
+      <option value="3000">3초</option>
+      <option value="4000">4초</option>
+    </select>
+    <span class="tts-status" id="ttsStatus" style="color:var(--green)">🎵 음성 ON</span>
+  </div>
+
+  <div style="margin-top:14px;">
+    <div class="card-title">📋 단어 목록 선택</div>
+    <div class="ctrl-row">
+      <button class="btn btn-secondary" onclick="loadFlash('travel')">🌏 여행</button>
+      <button class="btn btn-secondary" onclick="loadFlash('sake')">🍶 사케</button>
+      <button class="btn btn-secondary" onclick="loadFlash('business')">💼 비즈니스</button>
+      <button class="btn btn-secondary" onclick="loadFlash('jlpt')">🎌 JLPT</button>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="loadAiFlash()">🚀 AI로 새 단어 생성</button>
+  </div>
+</div>
+
+<!-- ── 탭 1: 학습 카드 ── -->
+<div class="content" id="tab1">
+  <div class="category-grid" id="catGrid"></div>
+
+  <div class="study-card" id="studyCard">
+    <div class="study-foreign" id="sf">카테고리를 선택하세요</div>
+    <div class="study-reading" id="sr"></div>
+    <div id="sa"></div>
+  </div>
+  <div class="counter-text" id="studyCounter"></div>
+
+  <div class="nav-row">
+    <button class="btn btn-secondary" onclick="studyFirst()">⏮️</button>
+    <button class="btn btn-secondary" onclick="studyPrev()">◀</button>
+    <button class="btn btn-primary" onclick="studyToggle()" id="studyToggleBtn">👀 정답</button>
+    <button class="btn btn-secondary" onclick="studyNext()">▶</button>
+    <button class="btn btn-secondary" onclick="studyLast()">⏭️</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+    <button class="btn btn-secondary" onclick="studySpeak()">🔊 발음</button>
+    <button class="btn btn-secondary" onclick="studyShuffle()">🔀 섞기</button>
+  </div>
+</div>
+
+<!-- ── 탭 2: 번역기 ── -->
+<div class="content" id="tab2">
+  <div class="api-notice" id="apiNotice">
+    ⚠️ Gemini API 키를 설정하면 번역 기능을 사용할 수 있습니다. (설정 탭)
+  </div>
+  <textarea class="textarea" id="korInput" rows="4" placeholder="한국어를 입력하세요&#10;예) 달달한 사케 있나요?"></textarea>
+  <button class="btn btn-primary" style="width:100%;" onclick="doTranslate()">🔄 일본어로 번역</button>
+  <div class="result-box" id="resultBox">
+    <div class="result-main" id="rMain"></div>
+    <div class="result-reading" id="rReading"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0;">
+      <button class="btn btn-secondary" onclick="speakResult()">🔊 발음 듣기</button>
+      <button class="btn btn-secondary" onclick="copyResult()">📋 복사</button>
+    </div>
+    <div class="result-alt" id="rAlt"></div>
+  </div>
+</div>
+
+<!-- ── 탭 3: 설정 ── -->
+<div class="content" id="tab3">
+  <div class="card">
+    <div class="card-title">🔑 Gemini API 키</div>
+    <div class="input-row">
+      <input type="password" class="input-text" id="apiKeyInput" placeholder="AIza...">
+      <button class="btn btn-primary" onclick="saveApiKey()">저장</button>
+    </div>
+    <div style="font-size:12px;color:var(--text2);">
+      <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--blue)">aistudio.google.com</a>에서 무료 발급<br>
+      저장하면 브라우저에 보관됩니다.
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">📊 학습 현황</div>
+    <div id="statsDiv" style="font-size:13px;line-height:2;color:var(--text2);">
+      로딩 중...
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 데이터 ──────────────────────────────────────
+const WORDS = {
+  travel: [
+    {f:"予約",k:"예약",r:"요야쿠"},{f:"観光",k:"관광",r:"칸코우"},{f:"空港",k:"공항",r:"쿠코우"},
+    {f:"電車",k:"전철",r:"덴샤"},{f:"ホテル",k:"호텔",r:"호테루"},{f:"地図",k:"지도",r:"치즈"},
+    {f:"切符",k:"표",r:"킵푸"},{f:"荷物",k:"짐",r:"니모츠"},{f:"パスポート",k:"여권",r:"파스포토"},
+    {f:"入口",k:"입구",r:"이리구치"},{f:"出口",k:"출구",r:"데구치"},{f:"右",k:"오른쪽",r:"미기"},
+    {f:"左",k:"왼쪽",r:"히다리"},{f:"まっすぐ",k:"직진",r:"맛스구"},{f:"近く",k:"근처",r:"치카쿠"},
+    {f:"料金",k:"요금",r:"료킨"},{f:"会計",k:"계산",r:"카이케이"},{f:"お土産",k:"기념품",r:"오미야게"},
+    {f:"写真",k:"사진",r:"샤신"},{f:"観光地",k:"관광지",r:"칸코우치"},
+  ],
+  sake: [
+    {f:"日本酒",k:"사케",r:"니혼슈"},{f:"甘口",k:"달달한",r:"아마쿠치"},{f:"辛口",k:"드라이",r:"카라쿠치"},
+    {f:"純米",k:"준마이",r:"준마이"},{f:"吟醸",k:"긴죠",r:"긴죠우"},{f:"大吟醸",k:"다이긴죠",r:"다이긴죠우"},
+    {f:"生酒",k:"생주",r:"나마자케"},{f:"熱燗",k:"따뜻하게",r:"아츠캉"},{f:"冷酒",k:"차갑게",r:"레이슈"},
+    {f:"一合",k:"한 홉",r:"이치고"},{f:"おすすめ",k:"추천",r:"오스스메"},{f:"銘柄",k:"브랜드",r:"메이가라"},
+    {f:"旨味",k:"감칠맛",r:"우마미"},{f:"香り",k:"향기",r:"카오리"},{f:"濃醇",k:"진한 맛",r:"노우쥰"},
+    {f:"淡麗",k:"담백한",r:"탄레이"},{f:"飲みやすい",k:"마시기 좋은",r:"노미야스이"},
+    {f:"ペアリング",k:"페어링",r:"페아링구"},{f:"地酒",k:"지역 사케",r:"지자케"},{f:"酒蔵",k:"양조장",r:"사카구라"},
+  ],
+  business: [
+    {f:"承知",k:"알겠습니다",r:"쇼우치"},{f:"確認",k:"확인",r:"카쿠닌"},{f:"提案",k:"제안",r:"테이안"},
+    {f:"検討",k:"검토",r:"켄토우"},{f:"共有",k:"공유",r:"쿄우유우"},{f:"対応",k:"대응",r:"타이오우"},
+    {f:"スケジュール",k:"스케줄",r:"스케쥬루"},{f:"会議",k:"회의",r:"카이기"},{f:"報告",k:"보고",r:"호우코쿠"},
+    {f:"資料",k:"자료",r:"시료우"},{f:"契約",k:"계약",r:"케이야쿠"},{f:"交渉",k:"교섭",r:"코우쇼우"},
+    {f:"担当",k:"담당",r:"탄토우"},{f:"見積もり",k:"견적",r:"미츠모리"},{f:"納期",k:"납기",r:"노우키"},
+    {f:"請求書",k:"청구서",r:"세이큐우쇼"},{f:"領収書",k:"영수증",r:"료우슈우쇼"},
+    {f:"取引先",k:"거래처",r:"토리히키사키"},{f:"折り返し",k:"회신",r:"오리카에시"},{f:"ご確認",k:"확인 부탁",r:"고카쿠닌"},
+  ],
+  jlpt: [
+    {f:"必要",k:"필요",r:"히츠요우"},{f:"可能",k:"가능",r:"카노우"},{f:"重要",k:"중요",r:"쥬우요우"},
+    {f:"困難",k:"곤란",r:"콘난"},{f:"努力",k:"노력",r:"도료쿠"},{f:"経験",k:"경험",r:"케이켄"},
+    {f:"成功",k:"성공",r:"세이코우"},{f:"失敗",k:"실패",r:"싯파이"},{f:"目標",k:"목표",r:"모쿠효우"},
+    {f:"計画",k:"계획",r:"케이카쿠"},{f:"解決",k:"해결",r:"카이케츠"},{f:"問題",k:"문제",r:"몬다이"},
+    {f:"方法",k:"방법",r:"호우호우"},{f:"理由",k:"이유",r:"리유우"},{f:"説明",k:"설명",r:"세츠메이"},
+    {f:"理解",k:"이해",r:"리카이"},{f:"練習",k:"연습",r:"렌슈우"},{f:"合格",k:"합격",r:"고우카쿠"},
+    {f:"試験",k:"시험",r:"시켄"},{f:"勉強",k:"공부",r:"벤쿄우"},
+  ],
+};
+
+const CARDS = {
+  greetings: [
+    {f:"こんにちは",k:"안녕하세요",r:"곤니치와"},{f:"おはようございます",k:"좋은 아침이에요",r:"오하요우고자이마스"},
+    {f:"こんばんは",k:"안녕하세요(저녁)",r:"콘반와"},{f:"ありがとうございます",k:"감사합니다",r:"아리가토우고자이마스"},
+    {f:"すみません",k:"실례합니다",r:"스미마센"},{f:"はじめまして",k:"처음 뵙겠습니다",r:"하지메마시테"},
+    {f:"よろしくお願いします",k:"잘 부탁드립니다",r:"요로시쿠오네가이시마스"},
+    {f:"失礼します",k:"실례합니다",r:"시츠레이시마스"},{f:"ごちそうさまでした",k:"잘 먹었습니다",r:"고치소우사마데시타"},
+    {f:"いただきます",k:"잘 먹겠습니다",r:"이타다키마스"},
+  ],
+  restaurant: [
+    {f:"いらっしゃいませ",k:"어서오세요",r:"이랏샤이마세"},{f:"何名様ですか",k:"몇 분이세요?",r:"난메이사마데스카"},
+    {f:"メニューをください",k:"메뉴 주세요",r:"메뉴우오 구다사이"},{f:"おすすめは何ですか",k:"추천이 뭔가요?",r:"오스스메와 난데스카"},
+    {f:"これをください",k:"이걸로 주세요",r:"코레오 구다사이"},{f:"おいしいです",k:"맛있습니다",r:"오이시이데스"},
+    {f:"お会計お願いします",k:"계산해주세요",r:"오카이케이 오네가이시마스"},
+    {f:"アレルギーがあります",k:"알레르기가 있습니다",r:"아레루기가 아리마스"},
+    {f:"辛くないですか",k:"맵지 않나요?",r:"카라쿠나이데스카"},
+    {f:"水をください",k:"물 주세요",r:"미즈오 구다사이"},
+  ],
+  sake: [
+    {f:"甘口はありますか",k:"달달한 사케 있나요?",r:"아마쿠치와 아리마스카"},
+    {f:"辛口をください",k:"드라이한 걸로 주세요",r:"카라쿠치오 구다사이"},
+    {f:"おすすめの日本酒はありますか",k:"추천 사케가 있나요?",r:"오스스메노 니혼슈와 아리마스카"},
+    {f:"冷酒でお願いします",k:"차갑게 주세요",r:"레이슈데 오네가이시마스"},
+    {f:"熱燗でお願いします",k:"따뜻하게 주세요",r:"아츠캉데 오네가이시마스"},
+    {f:"一合お願いします",k:"한 홉 주세요",r:"이치고 오네가이시마스"},
+    {f:"生酒はありますか",k:"생주 있나요?",r:"나마자케와 아리마스카"},
+    {f:"純米大吟醸をください",k:"준마이다이긴죠 주세요",r:"준마이다이긴죠우오 구다사이"},
+    {f:"この酒の銘柄は何ですか",k:"이 술 브랜드가 뭔가요?",r:"코노 사케노 메이가라와 난데스카"},
+    {f:"ペアリングをお願いします",k:"페어링 부탁드립니다",r:"페아링구오 오네가이시마스"},
+  ],
+  omakase: [
+    {f:"おまかせでお願いします",k:"오마카세로 부탁드립니다",r:"오마카세데 오네가이시마스"},
+    {f:"これは何ですか",k:"이건 뭔가요?",r:"코레와 난데스카"},
+    {f:"シャリを少なめに",k:"밥을 적게 해주세요",r:"샤리오 스쿠나메니"},
+    {f:"おいしいです",k:"맛있습니다",r:"오이시이데스"},
+    {f:"最高でした",k:"최고였습니다",r:"사이코우데시타"},
+    {f:"ごちそうさまでした",k:"잘 먹었습니다",r:"고치소우사마데시타"},
+    {f:"また来ます",k:"또 오겠습니다",r:"마타 키마스"},
+    {f:"アレルギーがあります",k:"알레르기가 있습니다",r:"아레루기가 아리마스"},
+    {f:"ネタを教えてください",k:"재료 알려주세요",r:"네타오 오시에테 구다사이"},
+    {f:"お箸をください",k:"젓가락 주세요",r:"오하시오 구다사이"},
+  ],
+  directions: [
+    {f:"〇〇はどこですか",k:"〇〇은 어디인가요?",r:"〇〇와 도코데스카"},
+    {f:"右に曲がってください",k:"오른쪽으로 가세요",r:"미기니 마갓테 구다사이"},
+    {f:"左に曲がってください",k:"왼쪽으로 가세요",r:"히다리니 마갓테 구다사이"},
+    {f:"まっすぐ行ってください",k:"직진하세요",r:"맛스구 잇테 구다사이"},
+    {f:"近くですか",k:"가깝나요?",r:"치카쿠데스카"},
+    {f:"歩いて何分ですか",k:"걸어서 몇 분인가요?",r:"아루이테 난푼데스카"},
+    {f:"地図を見せてください",k:"지도 보여주세요",r:"치즈오 미세테 구다사이"},
+    {f:"この電車は〇〇に止まりますか",k:"이 전철 〇〇에 서나요?",r:"코노 덴샤와 토마리마스카"},
+    {f:"迷子になりました",k:"길을 잃었습니다",r:"마이고니 나리마시타"},
+    {f:"タクシーをお願いします",k:"택시 불러주세요",r:"타쿠시오 오네가이시마스"},
+  ],
+  jlpt: [
+    {f:"〜ている",k:"~하고 있다",r:"테이루"},{f:"〜てください",k:"~해주세요",r:"테 구다사이"},
+    {f:"〜たことがある",k:"~한 적이 있다",r:"타 코토가 아루"},{f:"〜ながら",k:"~하면서",r:"나가라"},
+    {f:"〜ために",k:"~을 위해",r:"타메니"},{f:"〜ようにする",k:"~하도록 하다",r:"요우니 스루"},
+    {f:"〜かもしれない",k:"~일지도 모른다",r:"카모시레나이"},{f:"〜はずだ",k:"~일 것이다",r:"하즈다"},
+    {f:"〜てもいい",k:"~해도 좋다",r:"테모 이이"},{f:"〜なければならない",k:"~하지 않으면 안된다",r:"나케레바 나라나이"},
+  ],
+};
+
+// ── 상태 ──────────────────────────────────────────
+let flashWords = [...WORDS.travel];
+let flashIdx = 0;
+let flashPlaying = true;
+let flashMuted = false;
+let flashInterval = 2000;
+let flashTimer = null;
+
+let studyCards = [];
+let studyIdx = 0;
+let showAnswer = false;
+let curCat = 'greetings';
+
+let geminiKey = localStorage.getItem('geminiKey') || '';
+let translationResult = null;
+
+// ── 탭 전환 ──────────────────────────────────────
+function switchTab(n) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n));
+  document.querySelectorAll('.content').forEach((c,i) => c.classList.toggle('active', i===n));
+  if (n === 1 && studyCards.length === 0) loadCategory('greetings');
+  if (n === 2) updateApiNotice();
+  if (n === 3) updateStats();
+}
+
+// ── URL 파라미터 처리 ──────────────────────────────
+function getParam(key) {
+  return new URLSearchParams(window.location.search).get(key) || '';
+}
+function initFromUrl() {
+  const tab = getParam('tab');
+  const cat = getParam('category');
+  const tabMap = {translate:2, card:1, flash:0, stats:3};
+  if (tab && tabMap[tab] !== undefined) switchTab(tabMap[tab]);
+  if (cat && CARDS[cat]) { curCat = cat; loadCategory(cat); }
+}
+
+// ── 단어 깜빡이 ───────────────────────────────────
+function showFlash(idx, animate) {
+  const w = flashWords[idx];
+  if (!w) return;
+  const wEl = document.getElementById('fw');
+  if (animate) { wEl.classList.remove('fade-in'); void wEl.offsetWidth; wEl.classList.add('fade-in'); }
+  wEl.textContent = w.f;
+  document.getElementById('fr').textContent = w.r ? '📖 ' + w.r : '';
+  document.getElementById('fk').textContent = w.k ? '🇰🇷 ' + w.k : '';
+  document.getElementById('fc').textContent = (idx+1) + ' / ' + flashWords.length;
+  const bar = document.getElementById('fp');
+  bar.style.transition = 'none'; bar.style.width = '100%';
+  setTimeout(() => {
+    bar.style.transition = 'width ' + flashInterval + 'ms linear';
+    bar.style.width = '0%';
+  }, 30);
+  if (!flashMuted) speak(w.f, 'ja-JP');
+}
+function flashNext() { flashIdx = (flashIdx+1) % flashWords.length; showFlash(flashIdx, true); if(flashPlaying) resetTimer(); }
+function flashPrev() { flashIdx = (flashIdx-1+flashWords.length) % flashWords.length; showFlash(flashIdx, true); if(flashPlaying) resetTimer(); }
+function resetTimer() { clearInterval(flashTimer); if(flashPlaying) flashTimer = setInterval(flashNext, flashInterval); }
+function flashToggle() {
+  flashPlaying = !flashPlaying;
+  document.getElementById('playBtn').textContent = flashPlaying ? '⏸ 정지' : '▶ 재생';
+  if (flashPlaying) { showFlash(flashIdx, false); resetTimer(); }
+  else { clearInterval(flashTimer); window.speechSynthesis && window.speechSynthesis.cancel(); }
+}
+function flashMute() {
+  flashMuted = !flashMuted;
+  document.getElementById('muteBtn').textContent = flashMuted ? '🔇 음성' : '🔊 음성';
+  document.getElementById('ttsStatus').textContent = flashMuted ? '🔇 음성 OFF' : '🎵 음성 ON';
+  document.getElementById('ttsStatus').style.color = flashMuted ? 'var(--red)' : 'var(--green)';
+  if (flashMuted) window.speechSynthesis && window.speechSynthesis.cancel();
+}
+function changeSpeed() {
+  flashInterval = parseInt(document.getElementById('speedSel').value);
+  if (flashPlaying) resetTimer();
+}
+function loadFlash(type) {
+  flashWords = [...(WORDS[type] || WORDS.travel)];
+  flashIdx = 0;
+  showFlash(0, false);
+  if (flashPlaying) resetTimer();
+}
+async function loadAiFlash() {
+  if (!geminiKey) { alert('설정 탭에서 Gemini API 키를 먼저 입력하세요.'); switchTab(3); return; }
+  const btn = document.querySelector('#tab0 .btn-primary:last-child');
+  btn.textContent = '⏳ 생성 중...'; btn.disabled = true;
+  try {
+    const res = await callGemini('일본어 여행 단어 20개를 생성해주세요.\n형식: 단어 | 한국어 뜻 | 한글발음\n20줄만 출력하세요.');
+    const lines = res.trim().split('\n').filter(l => l.includes('|'));
+    if (lines.length) {
+      flashWords = lines.map(l => {
+        const [f,k,r] = l.split('|').map(x=>x.trim());
+        return {f,k,r};
+      }).filter(w => w.f && w.k);
+      flashIdx = 0;
+      showFlash(0, false);
+      if (flashPlaying) resetTimer();
+    }
+  } catch(e) { alert('오류: ' + e.message); }
+  btn.textContent = '🚀 AI로 새 단어 생성'; btn.disabled = false;
+}
+
+// ── 학습 카드 ─────────────────────────────────────
+function initCatGrid() {
+  const cats = [
+    {k:'greetings',n:'👋 기본 인사'},{k:'restaurant',n:'🍽️ 음식점'},
+    {k:'sake',n:'🍶 사케'},{k:'omakase',n:'🍣 오마카세'},
+    {k:'directions',n:'🧭 길 찾기'},{k:'jlpt',n:'🎌 JLPT'},
+  ];
+  document.getElementById('catGrid').innerHTML = cats.map(c =>
+    `<button class="cat-btn${c.k===curCat?' active':''}" onclick="loadCategory('${c.k}')">${c.n}</button>`
+  ).join('');
+}
+function loadCategory(cat) {
+  curCat = cat;
+  studyCards = [...(CARDS[cat] || CARDS.greetings)];
+  studyIdx = 0; showAnswer = false;
+  initCatGrid();
+  renderStudy();
+}
+function renderStudy() {
+  if (!studyCards.length) return;
+  const c = studyCards[studyIdx];
+  document.getElementById('sf').textContent = c.f;
+  document.getElementById('sr').textContent = c.r ? '📖 ' + c.r : '';
+  document.getElementById('sa').innerHTML = showAnswer
+    ? `<div class="study-answer">🇰🇷 ${c.k}</div>`
+    : '<div class="study-hint">👆 정답 보기를 누르세요</div>';
+  document.getElementById('studyCounter').textContent = (studyIdx+1) + ' / ' + studyCards.length;
+  document.getElementById('studyToggleBtn').textContent = showAnswer ? '🔒 숨기기' : '👀 정답';
+}
+function studyToggle() { showAnswer = !showAnswer; renderStudy(); }
+function studyNext() { if(studyIdx<studyCards.length-1) studyIdx++; showAnswer=false; renderStudy(); }
+function studyPrev() { if(studyIdx>0) studyIdx--; showAnswer=false; renderStudy(); }
+function studyFirst() { studyIdx=0; showAnswer=false; renderStudy(); }
+function studyLast() { studyIdx=studyCards.length-1; showAnswer=false; renderStudy(); }
+function studyShuffle() { studyCards.sort(()=>Math.random()-.5); studyIdx=0; showAnswer=false; renderStudy(); }
+function studySpeak() { if(studyCards[studyIdx]) speak(studyCards[studyIdx].f, 'ja-JP'); }
+
+// ── TTS ───────────────────────────────────────────
+function speak(text, lang) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang; u.rate = 0.85; u.pitch = 1.0; u.volume = 1.0;
+  function doSpeak() {
+    const vs = window.speechSynthesis.getVoices();
+    const m = vs.find(v => v.lang.startsWith(lang.split('-')[0]));
+    if (m) u.voice = m;
+    window.speechSynthesis.speak(u);
+  }
+  if (window.speechSynthesis.getVoices().length > 0) doSpeak();
+  else window.speechSynthesis.onvoiceschanged = doSpeak;
+}
+
+// ── 번역기 ────────────────────────────────────────
+function updateApiNotice() {
+  document.getElementById('apiNotice').style.display = geminiKey ? 'none' : 'block';
+}
+async function doTranslate() {
+  const text = document.getElementById('korInput').value.trim();
+  if (!text) { alert('번역할 텍스트를 입력하세요.'); return; }
+  if (!geminiKey) { alert('설정 탭에서 API 키를 입력하세요.'); switchTab(3); return; }
+  const btn = document.querySelector('#tab2 .btn-primary');
+  btn.innerHTML = '<span class="loading"><span></span><span></span><span></span></span>';
+  btn.disabled = true;
+  try {
+    const prompt = `Translate Korean to Japanese.\nRespond ONLY:\nTRANSLATION: [result]\nREADING: [pronunciation in Korean]\nALTERNATIVE: [alternative]\n\nKorean: ${text}`;
+    const res = await callGemini(prompt);
+    const r = {translation:'',reading:'',alternative:''};
+    res.split('\n').forEach(line => {
+      if (line.startsWith('TRANSLATION:')) r.translation = line.slice(12).trim();
+      else if (line.startsWith('READING:')) r.reading = line.slice(8).trim();
+      else if (line.startsWith('ALTERNATIVE:')) r.alternative = line.slice(12).trim();
+    });
+    translationResult = r;
+    document.getElementById('rMain').textContent = r.translation;
+    document.getElementById('rReading').textContent = r.reading ? '📖 ' + r.reading : '';
+    document.getElementById('rAlt').textContent = r.alternative ? '💡 대안: ' + r.alternative : '';
+    document.getElementById('resultBox').style.display = 'block';
+  } catch(e) {
+    alert('번역 오류: ' + e.message);
+  }
+  btn.textContent = '🔄 일본어로 번역'; btn.disabled = false;
+}
+function speakResult() {
+  if (translationResult) speak(translationResult.translation, 'ja-JP');
+}
+function copyResult() {
+  if (translationResult) navigator.clipboard.writeText(translationResult.translation);
+}
+
+// ── Gemini API ─────────────────────────────────────
+async function callGemini(prompt) {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({contents:[{parts:[{text:prompt}]}]})
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error?.message || 'API 오류');
+  }
+  const data = await res.json();
+  return data.candidates[0].content.parts[0].text;
+}
+
+// ── 설정 ──────────────────────────────────────────
+function saveApiKey() {
+  geminiKey = document.getElementById('apiKeyInput').value.trim();
+  localStorage.setItem('geminiKey', geminiKey);
+  document.getElementById('apiStatus').textContent = geminiKey ? '✅ API 연결됨' : 'API 미설정';
+  document.getElementById('apiStatus').style.color = geminiKey ? 'var(--green)' : 'var(--text2)';
+  alert(geminiKey ? '✅ API 키가 저장됐습니다!' : '키가 삭제됐습니다.');
+  updateApiNotice();
+}
+function updateStats() {
+  const streak = localStorage.getItem('streak') || 0;
+  const total = localStorage.getItem('totalWords') || 0;
+  document.getElementById('statsDiv').innerHTML = `
+    🔥 연속 학습: <strong>${streak}일째</strong><br>
+    📚 누적 단어: <strong>${total}개</strong><br>
+    🎌 학습 카테고리: <strong>6종</strong><br>
+    💾 데이터: 브라우저 로컬 저장
+  `;
+}
+
+// ── 초기화 ────────────────────────────────────────
+window.onload = () => {
+  if (geminiKey) {
+    document.getElementById('apiStatus').textContent = '✅ API 연결됨';
+    document.getElementById('apiStatus').style.color = 'var(--green)';
+    document.getElementById('apiKeyInput').value = geminiKey;
+  }
+  initCatGrid();
+  loadCategory('greetings');
+  showFlash(0, false);
+  flashTimer = setInterval(flashNext, flashInterval);
+  initFromUrl();
+};
+</script>
+</body>
+</html>
