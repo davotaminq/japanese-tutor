@@ -583,6 +583,22 @@ let translationResult = null;
 function switchTab(n) {
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n));
   document.querySelectorAll('.content').forEach((c,i) => c.classList.toggle('active', i===n));
+
+  // 단어 깜빡이 탭(0)에서 벗어나면 자동 재생 & 음성 정지
+  if (n !== 0) {
+    flashPlaying = false;
+    clearInterval(flashTimer);
+    flashTimer = null;
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    document.getElementById('playBtn').textContent = '▶ 재생';
+  } else {
+    // 단어 깜빡이로 돌아오면 자동 재생 재시작
+    flashPlaying = true;
+    document.getElementById('playBtn').textContent = '⏸ 정지';
+    showFlash(flashIdx, false);
+    flashTimer = setInterval(flashNext, flashInterval);
+  }
+
   if (n === 1 && studyCards.length === 0) loadCategory('greetings');
   if (n === 2) updateApiNotice();
   if (n === 3) updateStats();
