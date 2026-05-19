@@ -595,9 +595,57 @@ function getParam(key) {
 function initFromUrl() {
   const tab = getParam('tab');
   const cat = getParam('category');
+  const autoplay = getParam('autoplay');
   const tabMap = {translate:2, card:1, flash:0, stats:3};
   if (tab && tabMap[tab] !== undefined) switchTab(tabMap[tab]);
   if (cat && CARDS[cat]) { curCat = cat; loadCategory(cat); }
+
+  // autoplay: 단어/상용구 발음 즉시 재생
+  // URL에서 단어 데이터 저장 (봇이 보낸 단어)
+  const wordsParam = getParam('words');
+  const phrasesParam = getParam('phrases');
+  if (wordsParam) {
+    const ws = wordsParam.split(',').map(w => ({f:w.trim(), k:'', r:'', lang:'japanese'}));
+    localStorage.setItem('todayWords', JSON.stringify(ws));
+  }
+  if (phrasesParam) {
+    const ps = phrasesParam.split(',').map(p => ({f:p.trim(), k:'', r:'', lang:'japanese'}));
+    localStorage.setItem('todayPhrases', JSON.stringify(ps));
+  }
+
+  if (autoplay === 'words') {
+    switchTab(0);
+    const todayWords = JSON.parse(localStorage.getItem('todayWords') || '[]');
+    if (todayWords.length > 0) {
+      flashWords = todayWords;
+      flashIdx = 0;
+      showFlash(0, false);
+      if (flashPlaying) resetTimer();
+      showAutoplayBanner('📚 단어 발음 자동 재생 중...');
+    } else {
+      showAutoplayBanner('⚠️ 오늘 아침 발송 후 사용 가능합니다');
+    }
+  } else if (autoplay === 'phrases') {
+    switchTab(0);
+    const todayPhrases = JSON.parse(localStorage.getItem('todayPhrases') || '[]');
+    if (todayPhrases.length > 0) {
+      flashWords = todayPhrases;
+      flashIdx = 0;
+      showFlash(0, false);
+      if (flashPlaying) resetTimer();
+      showAutoplayBanner('💬 상용구 발음 자동 재생 중...');
+    } else {
+      showAutoplayBanner('⚠️ 오늘 아침 발송 후 사용 가능합니다');
+    }
+  }
+}
+
+function showAutoplayBanner(msg) {
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:60px;left:0;right:0;background:rgba(31,111,235,.9);color:#fff;text-align:center;padding:10px;font-size:13px;font-weight:600;z-index:999;';
+  banner.textContent = msg;
+  document.body.appendChild(banner);
+  setTimeout(() => banner.remove(), 3000);
 }
 
 // ── 단어 깜빡이 ───────────────────────────────────
